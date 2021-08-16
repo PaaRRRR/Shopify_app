@@ -25,7 +25,7 @@ const CreateOrdersList = () => {
     const [selectedItems, setSelectedItems] = useState([]);
 
     const submitHandler = (event) => {
-        fetch(`/createDraftOrder?${selectedItems.map(
+        fetch(`/createDraftOrderList?${selectedItems.map(
             (item) => { return `items=${item}`}
         ).join('&')}`).then(resp => { console.log(resp) });
     }
@@ -55,7 +55,7 @@ const CreateOrdersList = () => {
                             />
                 }}
             </Query>
-            <Form onSubmit={(event) => { console.log() }}>
+            <Form onSubmit={submitHandler}>
                 <FormLayout>
                     <TextField value={selectedItems} type="hidden" />
 

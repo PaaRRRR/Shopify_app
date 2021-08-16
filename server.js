@@ -167,17 +167,10 @@ app.prepare().getRequestHandler(() => {
 
     router.get('/createDraftOrder', verifyRequest(), async (ctx, resp) => {
         const { shop, accessToken } = ctx.session;
-        const type = ctx.query.type;
 
         const title = ctx.query.title;
         const quantity = ctx.query.quantity;
         const price = ctx.query.price;
-
-        if (type == "list") {
-            const items = ctx.query.items;
-        } else {
-
-        }
 
         const url = `https://${shop}/admin/api/2020-10/graphql.json`;
 
@@ -190,6 +183,80 @@ app.prepare().getRequestHandler(() => {
                             quantity: ${quantity}
                             originalUnitPrice: "${price}"
                         }
+                    }
+                ) {
+                    draftOrder {
+                        id
+                    }
+                    userErrors {
+                        message
+                    }
+                }
+            }`
+        });
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Access-Token': accessToken
+            },
+            body: CREATE_DRAFT_ORDER_QUERY
+        });
+
+        const responseJson = await response.json();
+
+        const COMPLETE_DRAFT_ORDER_QUERY = JSON.stringify({
+            query: `mutation {
+                draftOrderComplete (
+                    id: "${responseJson.data.draftOrderCreate.draftOrder.id}"
+                ) {
+                    draftOrder {
+                        id
+                    }
+                }
+            }`
+        });
+
+        const completeDraftOrderResponse = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Shopify-Access-Token': accessToken
+            },
+            body: COMPLETE_DRAFT_ORDER_QUERY
+        });
+
+        const responseCompleteDraftOrderJson = await completeDraftOrderResponse.json();
+        console.log(responseCompleteDraftOrderJson);
+
+        ctx.res.statusCode = 200;
+    });
+
+
+    //======================================================//
+    //          CREATE ORDER LIST ROUTER
+    //======================================================//
+
+    router.get('/createDraftOrderList', verifyRequest(), async (ctx, resp) => {
+        const { shop, accessToken } = ctx.session;
+        const items = ctx.query.items;
+
+        const url = `https://${shop}/admin/api/2020-10/graphql.json`;
+
+        let variantIDs = '';
+
+        if (items.length > 0) {
+            variantIDs = items.map(
+                (item) => { return `{ varaintId: "${item}" quantity: 1}` }
+            ).join(',');
+        }
+
+        const CREATE_DRAFT_ORDER_QUERY = JSON.stringify({
+            query: `mutation {
+                draftOrderCreate (
+                    input: {
+                        lineItems: [${variantIDs}]
                     }
                 ) {
                     draftOrder {
