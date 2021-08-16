@@ -18,10 +18,22 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const { SHOPIFY_API_SECRET_KEY, SHOPIFY_API_KEY } = process.env;
+//======================================================//
+//          KOA-SHOPIFY-WEBHOOKS
+//======================================================//
+
+const { receiveWebhook, registerWebhook } = require('@shopify/koa-shopify-webhooks');
+
+const { SHOPIFY_API_SECRET_KEY, SHOPIFY_API_KEY, HOST } = process.env;
+
+//======================================================//
+//          COMPONENTS
+//======================================================//
 
 const getSubscriptionUrl = require('./components/graphql/Subscription');
 const { default: CreateOrdersList } = require('./components/graphql/CreateOrdersList');
+
+const theme = require('./server/theme/updateTheme');
 
 app.prepare().getRequestHandler(() => {
     const server = new Koa();
@@ -42,10 +54,29 @@ app.prepare().getRequestHandler(() => {
                     'read_orders',
                     'write_orders',
                     'read_draft_orders',
-                    'write_draft_orders'
+                    'write_draft_orders',
+                    'read_theme',
+                    'write_theme'
                 ],
                 async afterAuth(ctx) {
                     const { shop, accessToken } = ctx.session;
+
+                    const registerAppUninstallWebhook = registerWebhook({
+                        address: `${HOST}/webhooks/app/uninstall`,
+                        topic: 'APP_UNINSTALLED',
+                        accessToken,
+                        shop,
+                        apiVersion: ApiVersion.October20
+                    });
+
+                    if (registerAppUninstallWebhook.success) {
+                        console.log('You have successfully installed a webhook');
+                    } else {
+                        console.log('Failed webhook registration', registerAppUninstallWebhook.result);
+                    }
+
+                    // await theme.updateThemeLiquid(accessToken, shop); // update theme
+
                     // await getSubscriptionUrl(ctx, accessToken, shop);
                     ctx.redirect('https://' + shop + '/admin/apps');
                 }
@@ -53,7 +84,14 @@ app.prepare().getRequestHandler(() => {
         )
     );
 
-    server.use(graphQLProxy({ version: ApiVersion.October20 }))
+    server.use(graphQLProxy({ version: ApiVersion.October20 }));
+
+    const webhook = receiveWebhook({ secret: SHOPIFY_API_SECRET_KEY });
+
+    router.post('/webhooks/app/uninstall', webhook, (ctx) => {
+        console.log(ctx.state.webhook);
+    });
+
     server.use(verifyRequest());
 
     //======================================================//
@@ -306,20 +344,21 @@ app.prepare().getRequestHandler(() => {
 
         ctx.res.statusCode = 200;
     });
+    
+
+    //======================================================//
+    //          SEND VERIFY REQUEST WITH ROUTER
+    //======================================================//
 
 
-
-    server.use(router.routes());
-    server.use(router.allowedMethods());
-
-
-
-    server.use(async (ctx) => {
+    router.get('(.*)', verifyRequest(), async (ctx) => {
         await handle(ctx.req, ctx.res);
         ctx.respond = false;
         ctx.res.statusCode = 200;
-        return;
     });
+
+    server.use(router.routes());
+    server.use(router.allowedMethods());
 
     server.listen(port, () => {
         console.log('> ');
