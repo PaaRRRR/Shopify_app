@@ -10,9 +10,9 @@ import React from 'react';
 // The following components are used to create the user interface for this component
 import { Page, Layout } from '@shopify/polaris';
 // InstallScript component
-import InstallScript from '../components/InstallScripts'; 
+import InstallScript from '../components/rest/InstallScripts'; 
 // UninstallScript component
-import UninstallScript from '../components/UninstallScripts'; 
+import UninstallScript from '../components/rest/UninstallScripts'; 
 
 class ScriptTags extends React.Component {
     render() {
