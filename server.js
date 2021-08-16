@@ -163,18 +163,22 @@ app.prepare().getRequestHandler(() => {
 
         getScriptTags.data.script_tags.map((script) => {
             //console.log(script);
-            if(script.src == src) {
+            if (script.src == src) {
                 scriptTagExist = true;
             }
         });
 
-        if(!scriptTagExist) {
+        let response;
+
+        if (!scriptTagExist) {
             await axios.post(url, scriptTagBody, { headers: shopifyHeader(accessToken) })
                 .then(response => { console.log(response); })
                 .catch(error => console.log(error));
+        } else {
+            response = JSON.stringify({ scriptTagStatus: true });
         }
         
-
+        ctx.body = response;
         ctx.res.statusCode = 200;
     });
 

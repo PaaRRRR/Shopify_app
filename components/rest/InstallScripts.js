@@ -11,7 +11,8 @@ import React, { useState } from 'react';
 // The following components are used to create the user interface for this component
 import { Banner, SettingToggle, TextStyle } from '@shopify/polaris';
 
-const InstallScript = () => {
+const InstallScript = (props) => {
+    const { scriptTagInstalled } = props;
     // Here we created the state.
     // active is the variable and setActive is the function to update the value of active state variable.
     // To learn more about useState, check React official documentation:
@@ -35,7 +36,7 @@ const InstallScript = () => {
 
     // If the active state is true, then we render the banner.
     // This way, users won't be able to click the button again.
-    if(active) {
+    if (active || scriptTagInstalled) {
         return (
             <Banner
                 title="You have installed the script"

@@ -13,15 +13,25 @@ import { Page, Layout } from '@shopify/polaris';
 import InstallScript from '../components/rest/InstallScripts'; 
 // UninstallScript component
 import UninstallScript from '../components/rest/UninstallScripts'; 
+import axios from 'axios';
 
 class ScriptTags extends React.Component {
+    state = {
+        scriptTagInstalled: false
+    }
+
+    componentDidMount() {
+        axios.get('/installScriptTags').then(resp => this.setState({ scriptTagInstalled: resp.data.scriptTagStatus }));
+    }
+
     render() {
+        let status = this.state.scriptTagInstalled;
         return (
             <Page>
                 <Layout.AnnotatedSection
                     title="Install Scripts"
                     description="Install scripts by clicking the button">
-                        <InstallScript></InstallScript>
+                        <InstallScript scriptTagInstalled={status}></InstallScript>
                 </Layout.AnnotatedSection>
 
                 <Layout.AnnotatedSection

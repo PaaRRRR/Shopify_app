@@ -1,10 +1,10 @@
-import { TextStyle } from "@shopify/polaris";
+import { Page } from "@shopify/polaris";
 import ShopData from "../components/graphql/ShopData";
 
 const Index = () => {
-    <div>
-        <TextStyle variation="positive">Example Shopify App</TextStyle>
-    </div>
+    <Page>
+        <ShopData></ShopData>
+    </Page>
 }
 
 export default Index;
